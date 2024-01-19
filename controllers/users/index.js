@@ -4,15 +4,17 @@ const { createToken } = require("../../utils/jwtCreateFunction");
 
 const router = Router();
 
-router.get("/User", async (req, res) => {
+router.post("/Login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const data = await Users.findOne(email, password);
+    const data = await Users.findOne({email, password});
     if (!data) {
-      res.send("User not exsit");
+      res.send("Email or password wrong");
     }
-    const token = createToken(data._id);
-    res.send(`token:"${token}"`);
+    if(data) {
+      const token = createToken(data._id);
+      res.send(`token:"${token}"`);
+    }
   } catch (error) {
     res.send(error);
   }
@@ -33,7 +35,6 @@ router.post("/User", async (req, res) => {
 });
 
 router.get("/me", async (req, res) => {
-
   const newUser = await Users.create({
     email,
     password,

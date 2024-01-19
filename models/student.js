@@ -5,7 +5,7 @@ const Student = new Schema({
   id: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
   },
   firstName: {
     type: String,
@@ -15,18 +15,14 @@ const Student = new Schema({
     type: String,
     required: true,
   },
-  existGroup: [
-    {
-      id, //group id
-      groupName, //group name
+  existGroup: {
+    id: { type: String },
+    groupName: { type: String },
+  },
+  paid: {
+      paidDate: { type: Date },
+      sum: { type: String },
     },
-  ],
-  paid: [
-    {
-      paidDate,
-      sum
-    },
-  ],
 });
 
 const student = mongoose.model("Student", Student);
