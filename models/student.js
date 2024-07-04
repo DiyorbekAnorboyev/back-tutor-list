@@ -2,10 +2,9 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const Student = new Schema({
-  id: {
+  ownerId: {
     type: String,
     required: true,
-    unique: true,
   },
   firstName: {
     type: String,
@@ -16,13 +15,13 @@ const Student = new Schema({
     required: true,
   },
   existGroup: {
-    id: { type: String },
+    groupId: { type: String, required: true },
     groupName: { type: String },
   },
   paid: {
-      paidDate: { type: Date },
-      sum: { type: String },
-    },
+    paidDate: { type: Date },
+    sum: { type: String },
+  },
 });
 
 const student = mongoose.model("Student", Student);

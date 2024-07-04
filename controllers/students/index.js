@@ -3,10 +3,14 @@ const Student = require("../../models/student");
 
 const router = Router();
 
-router.get("/Student", function (req, res) {
+router.get("/Student", async (req, res) => {
   const { userId } = req.decodedToken;
+  const ownerId = userId
   try {
-    res.send(userId);
+    const data = await Student.find({ownerId});
+    if(data) {
+      res.send(data);
+    }
   } catch (error) {
     res.send(error);
   }
@@ -14,17 +18,16 @@ router.get("/Student", function (req, res) {
 
 router.post("/Student", async (req, res) => {
   const { userId } = req.decodedToken;
-  const { email, password, tutorName } = req.body;
-
-  const id = 123
+  const { firstName, lastName, groupId, groupName, paidDate,sum } = req.body;
+  const ownerId = userId
 
   const newUser = await Student.create({
-    userId,
+    ownerId,
     firstName,
     lastName,
     existGroup: {
-      id,
-      groupName,
+      groupId,
+      groupName
     },
     paid: {
       paidDate,
