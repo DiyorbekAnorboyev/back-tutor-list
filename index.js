@@ -31,5 +31,7 @@ app.get("/me", (req, res) => {
   );
 });
 app.use("/api", require("./controllers/students/index"));
+app.use("/api", require("./controllers/groups/index"));
+app.use("/api", require("./controllers/teachers/index"));
 
 app.listen(3000);

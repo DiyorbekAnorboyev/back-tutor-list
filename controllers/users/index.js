@@ -46,4 +46,16 @@ router.get("/me", async (req, res) => {
   res.send("Create");
 });
 
+router.delete("/oneUserDelete/:_id", async (req, res) => {
+  const { _id } = req.params;
+  try {
+    const data = await Users.findByIdAndDelete({ _id });
+    if (data) {
+      res.send("Sucess deleted");
+    }
+  } catch (error) {
+    res.send(error);
+  }
+});
+
 module.exports = router;

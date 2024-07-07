@@ -2,10 +2,9 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const Group = new Schema({
-  id: {
+  ownerId: {
     type: String,
-    required: true,
-    unique: true,
+    required: true
   },
   groupName: {
     type: String,
