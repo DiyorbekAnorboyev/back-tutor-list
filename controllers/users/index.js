@@ -7,11 +7,11 @@ const router = Router();
 router.post("/Login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const data = await Users.findOne({email, password});
+    const data = await Users.findOne({ email, password });
     if (!data) {
       res.send("Email or password wrong");
     }
-    if(data) {
+    if (data) {
       const token = createToken(data._id);
       res.send(`token:"${token}"`);
     }

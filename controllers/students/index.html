@@ -1,0 +1,50 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML to PDF Example</title>
+</head>
+<body>
+    <h1>Generate PDF from HTML</h1>
+    <form id="pdfForm">
+        <label for="htmlContent">HTML Content:</label><br>
+        <textarea id="htmlContent" name="htmlContent" rows="10" cols="50" required></textarea><br><br>
+        <label for="format">Format:</label>
+        <select id="format" name="format">
+            <option value="A4">A4</option>
+            <option value="Letter">Letter</option>
+            <option value="Legal">Legal</option>
+            <!-- Add more options as needed -->
+        </select><br><br>
+        <label for="landscape">Landscape:</label>
+        <input type="checkbox" id="landscape" name="landscape"><br><br>
+        <button type="submit">Generate PDF</button>
+    </form>
+
+    <script>
+        document.getElementById('pdfForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const htmlContent = document.getElementById('htmlContent').value;
+            const format = document.getElementById('format').value;
+            const landscape = document.getElementById('landscape').checked;
+
+            const response = await fetch(`/api/pdf?html=${encodeURIComponent(htmlContent)}&format=${format}&landscape=${landscape}`);
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'output.pdf';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } else {
+                alert('Failed to generate PDF');
+            }
+        });
+    </script>
+</body>
+</html>
