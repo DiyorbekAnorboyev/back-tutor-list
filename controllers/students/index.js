@@ -10,7 +10,6 @@ const {
   sumToFormat,
   nowDate,
 } = require("../../utils/essentialFunctions");
-const QRCode = require("qrcode");
 
 const router = Router();
 
@@ -63,12 +62,8 @@ router.delete("/oneStudentDelete/:_id", async (req, res) => {
   }
 });
 
-//----------
+const mongoURI = process.env.MONGOURL;
 
-const mongoURI =
-  "mongodb+srv://diyorbek:diyorbek0211@cluster0.0rtcaal.mongodb.net/myDatabase?retryWrites=true&w=majority";
-
-// Create a MongoClient instance
 const client = new MongoClient(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -78,9 +73,8 @@ let gfs;
 async function initializeMongoDB() {
   try {
     await client.connect();
-    const db = client.db("myDatabase"); // Ensure this matches your actual database name
+    const db = client.db("myDatabase");
     gfs = new GridFSBucket(db, { bucketName: "uploads" });
-    console.log("MongoDB connected and GridFSBucket created");
   } catch (err) {
     console.error("Failed to connect to MongoDB", err);
     process.exit(1);
@@ -96,10 +90,14 @@ router.post("/pdf", upload.single("file"), async (req, res) => {
   const { userId } = req.decodedToken;
   const { sum, studentName } = req.body;
 
-  const data = await Users.findOne({ _id: userId });
-  const qrCode = await generateQR("https://t.me/Diy0rbek_Anorboyev");
-
   try {
+    const data = await Users.findOne({ _id: userId });
+    const fileName = `${nameToString(studentName)}.pdf`;
+    const uploadStream = gfs.openUploadStream(fileName);
+    const qrCode = await generateQR(
+      `https://checks-list.onrender.com/file/${uploadStream.id}`
+    );
+
     const html = `
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
@@ -107,7 +105,7 @@ router.post("/pdf", upload.single("file"), async (req, res) => {
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
 
-     <div class="w-50 d-flex justify-content-center border border-dark border-2 rounded-3 p-3 m-3">
+     <div class="w-75 d-flex justify-content-center border border-dark border-2 rounded-3 p-3 m-3">
         <div class=" ">
             <div class="d-flex justify-content-center text-bold text-uppercase font-monospace"><h3>${
               data.tutorName
@@ -131,9 +129,6 @@ router.post("/pdf", upload.single("file"), async (req, res) => {
     const pdfBuffer = await page.pdf({ printBackground: true });
 
     await browser.close();
-
-    const fileName = `${nameToString(studentName)}.pdf`;
-    const uploadStream = gfs.openUploadStream(fileName);
 
     uploadStream.end(pdfBuffer);
 
