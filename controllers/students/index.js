@@ -1,7 +1,16 @@
 const { Router } = require("express");
 const Student = require("../../models/student");
+const Users = require("../../models/User");
 const puppeteer = require("puppeteer");
-const fs = require("fs");
+const { MongoClient, GridFSBucket } = require("mongodb");
+const multer = require("multer");
+const {
+  nameToString,
+  generateQR,
+  sumToFormat,
+  nowDate,
+} = require("../../utils/essentialFunctions");
+const QRCode = require("qrcode");
 
 const router = Router();
 
@@ -54,40 +63,95 @@ router.delete("/oneStudentDelete/:_id", async (req, res) => {
   }
 });
 
-router.get("/pdf", async (req, res) => {
+//----------
+
+const mongoURI =
+  "mongodb+srv://diyorbek:diyorbek0211@cluster0.0rtcaal.mongodb.net/myDatabase?retryWrites=true&w=majority";
+
+// Create a MongoClient instance
+const client = new MongoClient(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+let gfs;
+
+async function initializeMongoDB() {
+  try {
+    await client.connect();
+    const db = client.db("myDatabase"); // Ensure this matches your actual database name
+    gfs = new GridFSBucket(db, { bucketName: "uploads" });
+    console.log("MongoDB connected and GridFSBucket created");
+  } catch (err) {
+    console.error("Failed to connect to MongoDB", err);
+    process.exit(1);
+  }
+}
+
+initializeMongoDB();
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+router.post("/pdf", upload.single("file"), async (req, res) => {
   const { userId } = req.decodedToken;
+  const { sum, studentName } = req.body;
+
+  const data = await Users.findOne({ _id: userId });
+  const qrCode = await generateQR("https://t.me/Diy0rbek_Anorboyev");
 
   try {
-    const html = `<h1>Hello world</h1>`;
+    const html = `
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
 
-    if (!html) {
-      return res.status(400).send("HTML content is required");
-    }
+     <div class="w-50 d-flex justify-content-center border border-dark border-2 rounded-3 p-3 m-3">
+        <div class=" ">
+            <div class="d-flex justify-content-center text-bold text-uppercase font-monospace"><h3>${
+              data.tutorName
+            }</h3></div>
+            <div class="d-flex justify-content-center text-bold text-capitalize "><h5>${studentName}</h5></div>
+            <div class="d-flex justify-content-center "><h1>${sumToFormat(
+              sum
+            )} UZS</h1></div>
+            <div class="d-flex justify-content-between align-items-center px-3">
+                <div><h5 class="text-capitalize">${nowDate()}</h5></div>
+                <div class="w-50 d-flex justify-content-end">
+                <img class="w-50" src="${qrCode}"/></div>
+            </div>
+        </div>
+    </div>`;
 
-    // Launch a headless browser
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
-
-    // Set the content of the page to the provided HTML
     await page.setContent(html, { waitUntil: "networkidle0" });
 
-    // Generate PDF from the HTML content
-    const pdfBuffer = await page.pdf({
-      printBackground: true, // Print background graphics
-    });
+    const pdfBuffer = await page.pdf({ printBackground: true });
 
-    // Close the browser
     await browser.close();
 
-    // Set response headers
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename=${userId}.pdf`);
-    res.setHeader("Content-Length", pdfBuffer.length);
+    const fileName = `${nameToString(studentName)}.pdf`;
+    const uploadStream = gfs.openUploadStream(fileName);
 
-    // Send the PDF file as response
-    res.send(pdfBuffer);
+    uploadStream.end(pdfBuffer);
+
+    uploadStream.on("finish", () => {
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=${nameToString(studentName)}.pdf`
+      );
+      res.setHeader("Content-Length", pdfBuffer.length);
+
+      res.send(pdfBuffer);
+    });
+
+    uploadStream.on("error", (err) => {
+      res.status(500).json({ error: "Error uploading file" });
+    });
   } catch (error) {
-    console.error("Error generating PDF:", error);
     res.status(500).send("Error generating PDF");
   }
 });
