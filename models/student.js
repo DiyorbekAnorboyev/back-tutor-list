@@ -16,7 +16,6 @@ const Student = new Schema({
   },
   existGroup: {
     groupId: { type: String, required: true },
-    groupName: { type: String },
   },
   paid: {
     paidDate: { type: Date },

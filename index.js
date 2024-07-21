@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require('cors');
 const mongoose = require("mongoose");
 require("dotenv").config();
 const app = express();
@@ -8,6 +9,8 @@ const { authToken } = require("./middlewares/auth");
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(cors());
+app.options('*', cors());
 
 const mongoUrl = process.env.MONGOURL;
 mongoose

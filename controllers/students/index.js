@@ -28,7 +28,7 @@ router.get("/Student", async (req, res) => {
 
 router.post("/Student", async (req, res) => {
   const { userId } = req.decodedToken;
-  const { firstName, lastName, groupId, groupName, paidDate, sum } = req.body;
+  const { firstName, lastName, groupId, sum } = req.body;
   const ownerId = userId;
 
   const newUser = await Student.create({
@@ -37,10 +37,9 @@ router.post("/Student", async (req, res) => {
     lastName,
     existGroup: {
       groupId,
-      groupName,
     },
     paid: {
-      paidDate,
+      paidDate: new Date(),
       sum,
     },
   });
